@@ -1,0 +1,183 @@
+﻿<%-- 
+Project:JVT 项目通用代码统一生产模版
+Author: 林青煌
+Email:814400623@qq.com
+Date:2017年9月
+Description: 本模版主要用来生成输出JVT项目的Domain文档；
+--%>
+<%--申请一个C#语言的模版--%>
+<%@ Template Language="C#" TargetLanguage="Text" %>
+<%--引入数据库引用--%>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%--引入正则表达式引用--%>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
+<%--定义属性变了--%>
+<%@ Property Name="Table" Type="SchemaExplorer.TableSchema"  Optional="False" Category="数据库表" %>
+package com.jvt.microservice.domain;
+import com.jvt.microservice.domain.base.<%=GetExtendClass(Table)%>;
+public class <%=GetClassName(Table)%> extends <%=GetExtendClass(Table)%> {
+<%foreach(SchemaExplorer.ColumnSchema col in Table.Columns)%>
+<%{%>
+    <%if(!(col.Name.ToUpper()=="ID"||col.Name.ToUpper()=="STATE"||col.Name.ToUpper()=="SORT"||col.Name.ToUpper()=="ADD_TIME"||col.Name.ToUpper()=="FK_ADD_USER_ID"||col.Name.ToUpper()=="FK_ADD_USER_NAME"))%>
+    <%{%>
+    //<%=col.Description%>
+    private <%=GetJavaType(col)%> <%=GetCamelName(col.Name)%>;
+    public <%=GetJavaType(col)%> get<%=GetPascalName(col.Name)%>(){
+        return this.<%=GetCamelName(col.Name)%>;
+    }
+    public void set<%=GetPascalName(col.Name)%>(<%=GetJavaType(col)%> <%=GetCamelName(col.Name)%>){
+        this.<%=GetCamelName(col.Name)%>=<%=GetCamelName(col.Name)%>;
+    }
+    <%}%>
+<%}%>
+}
+<script runat="template">
+//PascalName命名法(大驼峰）
+public string GetPascalName(string name)
+{
+    string result="";
+    string[] arrName = name.Split('_');//按_截取截取数组
+    for(int i=0;i<arrName.Length;i++){
+        string item=arrName[i];
+        item=item.ToLower();
+        item=item.Substring(0,1).ToUpper()+item.Substring(1);
+        result+=item;
+    } 
+    return result;
+}
+//CamelName命名法（小驼峰）
+public string GetCamelName(string name)
+{
+   // return name.Substring(0,1).ToLower()+name.Substring(1);
+     string result="";
+    string[] arrName = name.Split('_');//按_截取截取数组
+    for(int i=0;i<arrName.Length;i++){
+        string item=arrName[i];
+        item=item.ToLower();
+        item=item.Substring(0,1).ToUpper()+item.Substring(1);
+        result+=item;
+    }
+    result=result.Substring(0,1).ToLower()+result.Substring(1);
+    return result;
+}
+
+//将数据库数据类型转换为JAVA数据类型
+public string GetJavaType(ColumnSchema column) 
+{ 
+    if(column.Name.EndsWith("TypeCode"))
+        return column.Name;
+    switch (column.DataType) 
+    { 
+        case DbType.AnsiString: 
+            return "String"; 
+        case DbType.AnsiStringFixedLength: 
+            return "String"; 
+        case DbType.Binary: 
+            return "byte"; 
+        case DbType.Boolean: 
+            return "bool"; 
+        case DbType.Byte: 
+            return "byte"; 
+        case DbType.Currency: 
+            return "decimal"; 
+        case DbType.Date: 
+            return "DateTime"; 
+        case DbType.DateTime: 
+            return "DateTime"; 
+        case DbType.DateTime2: 
+            return "DateTime"; 
+        case DbType.DateTimeOffset: 
+            return "DateTime"; 
+        case DbType.Decimal: 
+            return "decimal"; 
+        case DbType.Double: 
+            return "double"; 
+        case DbType.Guid: 
+            return "Guid"; 
+        case DbType.Int16: 
+            return "short"; 
+        case DbType.Int32: 
+            return "int"; 
+        case DbType.Int64: 
+            return "long"; 
+        case DbType.Object: 
+            return "object"; 
+        case DbType.SByte: 
+            return "sbyte"; 
+        case DbType.Single: 
+            return "float"; 
+        case DbType.String: 
+            return "String"; 
+        case DbType.StringFixedLength: 
+            return "String"; 
+        case DbType.Time: 
+            return "DateTime"; 
+        case DbType.UInt16: 
+            return "ushort"; 
+        case DbType.UInt32: 
+            return "uint"; 
+        case DbType.UInt64: 
+            return "ulong"; 
+        case DbType.VarNumeric: 
+            return "decimal"; 
+        case DbType.Xml: 
+            return "String"; 
+        default: 
+            return "object"; 
+        } 
+    } 
+
+////移除表名dt_标志
+public String GetTableNameRemoveDt(TableSchema table)
+{
+    return table.Name.Substring(3);
+}
+//获取doamin的类名
+public String GetClassName(TableSchema table)
+{    
+    string shortTableName=GetTableNameRemoveDt(table);
+    return GetPascalName(shortTableName);
+}
+//是否是主表结构
+public bool IsPrimaryTable(TableSchema table)
+{
+    bool isExistState=false,isExistSort=false,isExistAddTime=false,isExistAddUserId=false,isExistAddUserName=false;
+    foreach(SchemaExplorer.ColumnSchema col in table.Columns)
+    {
+        if(col.Name.ToUpper()=="STATE")
+        {
+            isExistState=true;
+        }
+        if(col.Name.ToUpper()=="SORT")
+        {
+            isExistSort=true;
+        }
+        if(col.Name.ToUpper()=="ADD_TIME")
+        {
+            isExistAddTime=true;
+        }
+        if(col.Name.ToUpper()=="FK_ADD_USER_ID")
+        {
+            isExistAddUserId=true;
+        }
+        if(col.Name.ToUpper()=="FK_ADD_USER_NAME")
+        {
+            isExistAddUserName=true;
+        }
+    }
+    return isExistState&&isExistSort&&isExistAddTime&&isExistAddUserId&&isExistAddUserName;
+}
+
+public string GetExtendClass(TableSchema table)
+{
+    if(IsPrimaryTable(table))
+    {
+        return "MasterEntity";
+    }else{
+        return "BaseEntity";
+    }
+}
+
+
+</script>
