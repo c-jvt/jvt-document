@@ -1,0 +1,130 @@
+﻿<%-- 
+Name:
+Author: 
+Description: 
+--%>
+<%@ Template Language="C#" TargetLanguage="Text" %>
+<%--引入正则表达式引用--%>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
+<%-- 注册模板 --%>
+<%@ Register Name="DomainTemplate" Template="Domain.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="MapperTemplate" Template="Mapper.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="DaoTemplate" Template="Dao.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="ServiceTemplate" Template="Service.cst" MergeProperties="Flase" ExcludeProperties=""%>
+
+<%@ Register Name="ServiceImplTemplate" Template="ServiceImpl.cst" MergeProperties="Flase" ExcludeProperties=""%>
+
+<%--文件存放路径--%>
+<%@ Property Name="FilePath" Type="String" Optional="False" Category="文件存放路径" %>
+<%--数据库--%>
+<%@ Property Name="DatabaseSource" Type="SchemaExplorer.DatabaseSchema" DeepLoad="True" Optional="False" Category="数据库"%>
+
+<%
+this.GenerateDomainClass();
+this.GenerateMapperXML();
+this.GenerateDaoInterface();
+this.GenerateServiceInterface();
+this.GenerateServiceImplClass();
+%>
+
+<script runat="template">
+//生成实体Domain类文档   
+private void GenerateDomainClass()
+{        
+    CodeTemplate Template = new DomainTemplate();        
+    foreach(TableSchema table in this.DatabaseSource.Tables)        
+    {            
+        string FileDirectory = @FilePath +@"\Domain\"+GetClassName(table)+ ".java";            
+        //生成模板   
+        Template.SetProperty("Table",table);
+        //文件输出            
+        Template.RenderToFile(FileDirectory,true);            
+        Response.WriteLine(FileDirectory +" 创建成功！");        
+    }    
+}
+//生成Mapper XML文档
+private void GenerateMapperXML()
+{
+     CodeTemplate Template = new MapperTemplate();        
+    foreach(TableSchema table in this.DatabaseSource.Tables)        
+    {            
+        string FileDirectory = @FilePath +@"\Mapper\"+GetClassName(table)+ "Mapper.xml";            
+        //生成模板   
+        Template.SetProperty("Table",table);
+        //文件输出            
+        Template.RenderToFile(FileDirectory,true);            
+        Response.WriteLine(FileDirectory +" 创建成功！");        
+    }    
+}
+
+//生成Dao接口文档
+private void GenerateDaoInterface()
+{
+     CodeTemplate Template = new DaoTemplate();        
+    foreach(TableSchema table in this.DatabaseSource.Tables)        
+    {            
+        string FileDirectory = @FilePath +@"\Dao\"+GetClassName(table)+ "Dao.java";            
+        //生成模板   
+        Template.SetProperty("Table",table);
+        //文件输出            
+        Template.RenderToFile(FileDirectory,true);            
+        Response.WriteLine(FileDirectory +" 创建成功！");        
+    }    
+}
+
+//生成Service接口文档
+private void GenerateServiceInterface()
+{
+     CodeTemplate Template = new ServiceTemplate();        
+    foreach(TableSchema table in this.DatabaseSource.Tables)        
+    {            
+        string FileDirectory = @FilePath +@"\Service\"+GetClassName(table)+ "Service.java";            
+        //生成模板   
+        Template.SetProperty("Table",table);
+        //文件输出            
+        Template.RenderToFile(FileDirectory,true);            
+        Response.WriteLine(FileDirectory +" 创建成功！");        
+    }    
+}
+//生成Service类文档
+private void GenerateServiceImplClass()
+{
+     CodeTemplate Template = new ServiceImplTemplate();        
+    foreach(TableSchema table in this.DatabaseSource.Tables)        
+    {            
+        string FileDirectory = @FilePath +@"\ServiceImpl\"+GetClassName(table)+ "ServiceImpl.java";            
+        //生成模板   
+        Template.SetProperty("Table",table);
+        //文件输出            
+        Template.RenderToFile(FileDirectory,true);            
+        Response.WriteLine(FileDirectory +" 创建成功！");        
+    }    
+}
+
+
+
+//PascalName命名法(大驼峰）
+public string GetPascalName(string name)
+{
+    string result="";
+    string[] arrName = name.Split('_');//按_截取截取数组
+    for(int i=0;i<arrName.Length;i++){
+        string item=arrName[i];
+        item=item.ToLower();
+        item=item.Substring(0,1).ToUpper()+item.Substring(1);
+        result+=item;
+    } 
+    return result;
+}
+////移除表名dt_标志
+public String GetTableNameRemoveDt(TableSchema table)
+{
+    return table.Name.Substring(3);
+}
+//获取doamin的类名
+public String GetClassName(TableSchema table)
+{    
+    string shortTableName=GetTableNameRemoveDt(table);
+    return GetPascalName(shortTableName);
+}
+</script>

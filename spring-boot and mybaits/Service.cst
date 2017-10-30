@@ -1,0 +1,80 @@
+﻿<%-- 
+Project:JVT 项目通用代码统一生产模版
+Author: 林青煌
+Email:814400623@qq.com
+Date:2017年9月
+Description: 本模版主要用来生成输出JVT项目的Service接口；
+--%>
+<%--申请一个C#语言的模版--%>
+<%@ Template Language="C#" TargetLanguage="Text" %>
+<%--引入数据库引用--%>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%--引入正则表达式引用--%>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
+<%--定义属性变了--%>
+<%@ Property Name="Table" Type="SchemaExplorer.TableSchema"  Optional="False" Category="数据库表" %>
+package com.jvt.microservice.service;
+import com.jvt.microservice.domain.out.ResultBody;
+import com.jvt.microservice.domain.<%=GetClassName(Table)%>;
+
+public interface <%=GetClassName(Table)%>Service {
+    ResultBody getInfo(String id);
+    
+    ResultBody getList(String keyword);
+    
+    ResultBody addInfo(<%=GetClassName(Table)%> <%=GetClazzName(Table)%>);
+    
+    ResultBody updateInfo(<%=GetClassName(Table)%> <%=GetClazzName(Table)%>);
+    
+    ResultBody delInfo(String id);
+}
+
+
+<script runat="template">
+//PascalName命名法(大驼峰）
+public string GetPascalName(string name)
+{
+    string result="";
+    string[] arrName = name.Split('_');//按_截取截取数组
+    for(int i=0;i<arrName.Length;i++){
+        string item=arrName[i];
+        item=item.ToLower();
+        item=item.Substring(0,1).ToUpper()+item.Substring(1);
+        result+=item;
+    } 
+    return result;
+}
+//CamelName命名法（小驼峰）
+public string GetCamelName(string name)
+{
+     string result="";
+    string[] arrName = name.Split('_');//按_截取截取数组
+    for(int i=0;i<arrName.Length;i++){
+        string item=arrName[i];
+        item=item.ToLower();
+        item=item.Substring(0,1).ToUpper()+item.Substring(1);
+        result+=item;
+    }
+    result=result.Substring(0,1).ToLower()+result.Substring(1);
+    return result;
+}
+
+//移除表名dt_标志
+public String GetTableNameRemoveDt(TableSchema table)
+{
+    return table.Name.Substring(3);
+}
+//获取实例名
+public String GetClazzName(TableSchema table)
+{    
+    string shortTableName=GetTableNameRemoveDt(table);
+    return GetCamelName(shortTableName);
+}
+//获取类名
+public String GetClassName(TableSchema table)
+{    
+    string shortTableName=GetTableNameRemoveDt(table);
+    return GetPascalName(shortTableName);
+}
+</script>

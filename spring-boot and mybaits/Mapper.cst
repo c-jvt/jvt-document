@@ -1,0 +1,234 @@
+﻿<%-- 
+Project:JVT 项目通用代码统一生产模版
+Author: 林青煌
+Email:814400623@qq.com
+Date:2017年9月
+Description: 本模版主要用来生成输出JVT项目的Mapper文档；生成的Mapper文档包含了通用增、删、改、查功能
+--%>
+<%--申请一个C#语言的模版--%>
+<%@ Template Language="C#" TargetLanguage="Text" %>
+<%--引入数据库引用--%>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%--引入正则表达式引用--%>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
+<%--定义属性变了--%>
+<%@ Property Name="Table"   Type="SchemaExplorer.TableSchema"  Optional="False" Category="数据库表" %>
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jvt.microservice.dao.<%=GetClassName(Table)%>Dao">
+    <resultMap id="BaseResultMap" type="com.jvt.microservice.domain.<%=GetClassName(Table)%>">
+    <%foreach(SchemaExplorer.ColumnSchema col in Table.Columns)%>
+    <%{%>
+        <%if(!(col.Name.ToUpper()=="ID"||col.Name.ToUpper()=="STATE"||col.Name.ToUpper()=="SORT"||col.Name.ToUpper()=="ADD_TIME"||col.Name.ToUpper()=="FK_ADD_USER_ID"||col.Name.ToUpper()=="FK_ADD_USER_NAME"))%>
+        <%{%>
+        <result column="<%=col.Name%>" property="<%=GetCamelName(col.Name)%>" />
+        <%}%>
+    <%}%>
+    </resultMap>
+    <sql id="Base_Column_List">
+    <%String sql="";%>
+    <%foreach(SchemaExplorer.ColumnSchema col in Table.Columns)%>
+    <%{%>
+        <%sql+=","+GetColumnSQL(col);%>
+    <%}%>
+        <%=sql.Substring(1)%>
+    </sql>
+    <select id="getInfo" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        form <%=Table.Name%>
+        <where>
+            id = #{id}
+        </where>
+    </select>
+    <select id="getList" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        form <%=Table.Name%>
+        <where>
+            <if test="keyword!=null">
+                name like #{keyword}
+            </if>
+        </where>
+     </select>
+     <insert id="addInfo" parameterType="com.jvt.microservice.domain.<%=GetClassName(Table)%>">
+        <%String strFields="",strValues="";%>
+        <%foreach(SchemaExplorer.ColumnSchema col in Table.Columns)%>
+        <%{%>
+            <%strFields+=","+ col.Name.ToLower();%>
+            <%strValues+=","+"#{"+GetCamelName(col.Name)+"}";%>
+        <%}%>
+        insert into <%=Table.Name%>(<%=strFields.Substring(1)%>)
+        values(<%=strValues.Substring(1)%>)
+     </insert>
+     <update id="updateInfo" parameterType="com.jvt.microservice.domain.<%=GetClassName(Table)%>">
+        update <%=Table.Name%>
+        <%string strUpdate="";%>
+        <set>
+            <%foreach(SchemaExplorer.ColumnSchema col in Table.Columns)%>
+            <%{%>
+                <%if(!(col.Name.ToUpper()=="ID"||col.Name.ToUpper()=="ADD_TIME"||col.Name.ToUpper()=="FK_ADD_USER_ID"||col.Name.ToUpper()=="FK_ADD_USER_NAME"))%>
+                <%{%>
+                    <%strUpdate+=","+col.Name.ToLower()+"=#{"+GetCamelName(col.Name)+"}"; %>
+                <%}%>
+            <%}%>
+            <%=strUpdate.Substring(1)%>
+        </set>
+        <where>
+            id=#{id}
+        </where>
+     </update>
+     <delete id="delInfo" parameterType="java.lang.String">
+        delete form <%=Table.Name%>
+        <where>
+            id=#{id}
+        </where>
+     </delete>
+</mapper>
+<script runat="template">
+//PascalName命名法(大驼峰）
+public string GetPascalName(string name)
+{
+    string result="";
+    string[] arrName = name.Split('_');//按_截取截取数组
+    for(int i=0;i<arrName.Length;i++){
+        string item=arrName[i];
+        item=item.ToLower();
+        item=item.Substring(0,1).ToUpper()+item.Substring(1);
+        result+=item;
+    } 
+    return result;
+}
+//CamelName命名法（小驼峰）
+public string GetCamelName(string name)
+{
+   // return name.Substring(0,1).ToLower()+name.Substring(1);
+     string result="";
+    string[] arrName = name.Split('_');//按_截取截取数组
+    for(int i=0;i<arrName.Length;i++){
+        string item=arrName[i];
+        item=item.ToLower();
+        item=item.Substring(0,1).ToUpper()+item.Substring(1);
+        result+=item;
+    }
+    result=result.Substring(0,1).ToLower()+result.Substring(1);
+    return result;
+}
+
+//将数据库数据类型转换为JAVA数据类型
+public string GetJavaType(ColumnSchema column) 
+{ 
+    if(column.Name.EndsWith("TypeCode"))
+        return column.Name;
+    switch (column.DataType) 
+    { 
+        case DbType.AnsiString: 
+            return "String"; 
+        case DbType.AnsiStringFixedLength: 
+            return "String"; 
+        case DbType.Binary: 
+            return "byte"; 
+        case DbType.Boolean: 
+            return "bool"; 
+        case DbType.Byte: 
+            return "byte"; 
+        case DbType.Currency: 
+            return "decimal"; 
+        case DbType.Date: 
+            return "DateTime"; 
+        case DbType.DateTime: 
+            return "DateTime"; 
+        case DbType.DateTime2: 
+            return "DateTime"; 
+        case DbType.DateTimeOffset: 
+            return "DateTime"; 
+        case DbType.Decimal: 
+            return "decimal"; 
+        case DbType.Double: 
+            return "double"; 
+        case DbType.Guid: 
+            return "Guid"; 
+        case DbType.Int16: 
+            return "short"; 
+        case DbType.Int32: 
+            return "int"; 
+        case DbType.Int64: 
+            return "long"; 
+        case DbType.Object: 
+            return "object"; 
+        case DbType.SByte: 
+            return "sbyte"; 
+        case DbType.Single: 
+            return "float"; 
+        case DbType.String: 
+            return "String"; 
+        case DbType.StringFixedLength: 
+            return "String"; 
+        case DbType.Time: 
+            return "DateTime"; 
+        case DbType.UInt16: 
+            return "ushort"; 
+        case DbType.UInt32: 
+            return "uint"; 
+        case DbType.UInt64: 
+            return "ulong"; 
+        case DbType.VarNumeric: 
+            return "decimal"; 
+        case DbType.Xml: 
+            return "String"; 
+        default: 
+            return "object"; 
+        } 
+    } 
+
+////移除表名dt_标志
+public String GetTableNameRemoveDt(TableSchema table)
+{
+    return table.Name.Substring(3);
+}
+//获取mapper的类名
+public String GetClassName(TableSchema table)
+{    
+    string shortTableName=GetTableNameRemoveDt(table);
+    return GetPascalName(shortTableName);
+}
+//是否是主表结构
+public bool IsPrimaryTable(TableSchema table)
+{
+    bool isExistState=false,isExistSort=false,isExistAddTime=false,isExistAddUserId=false,isExistAddUserName=false;
+    foreach(SchemaExplorer.ColumnSchema col in table.Columns)
+    {
+        if(col.Name.ToUpper()=="STATE")
+        {
+            isExistState=true;
+        }
+        if(col.Name.ToUpper()=="SORT")
+        {
+            isExistSort=true;
+        }
+        if(col.Name.ToUpper()=="ADD_TIME")
+        {
+            isExistAddTime=true;
+        }
+        if(col.Name.ToUpper()=="FK_ADD_USER_ID")
+        {
+            isExistAddUserId=true;
+        }
+        if(col.Name.ToUpper()=="FK_ADD_USER_NAME")
+        {
+            isExistAddUserName=true;
+        }
+    }
+    return isExistState&&isExistSort&&isExistAddTime&&isExistAddUserId&&isExistAddUserName;
+}
+
+public String GetColumnSQL(ColumnSchema col)
+{
+    if(col.Name.IndexOf("_")>-1){
+        return col.Name.ToLower()+" as "+GetCamelName(col.Name);
+    }else{
+        return GetCamelName(col.Name);
+    }
+}
+</script>

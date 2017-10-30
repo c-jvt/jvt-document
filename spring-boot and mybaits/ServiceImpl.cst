@@ -1,0 +1,114 @@
+﻿<%-- 
+Project:JVT 项目通用代码统一生产模版
+Author: 林青煌
+Email:814400623@qq.com
+Date:2017年9月
+Description: 本模版主要用来生成输出JVT项目的Service业务逻辑处理类；
+--%>
+<%--申请一个C#语言的模版--%>
+<%@ Template Language="C#" TargetLanguage="Text" %>
+<%--引入数据库引用--%>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%--引入正则表达式引用--%>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
+<%--定义属性变了--%>
+<%@ Property Name="Table" Type="SchemaExplorer.TableSchema"  Optional="False" Category="数据库表" %>
+package com.jvt.microservice.service.impl;
+
+import java.util.List;
+import com.github.pagehelper.Page;
+import org.springframework.stereotype.Service;
+import com.jvt.microservice.domain.base.PageResult;
+import com.jvt.microservice.domain.out.ResultBody;
+import com.jvt.microservice.infrastructure.mybatis.SqlUtil;
+import com.jvt.microservice.infrastructure.mybatis.PageUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.jvt.microservice.dao.<%=GetClassName(Table)%>Dao;
+import com.jvt.microservice.domain.<%=GetClassName(Table)%>;
+import com.jvt.microservice.service.<%=GetClassName(Table)%>Service;
+
+@Service
+public class <%=GetClassName(Table)%>ServiceImple implements <%=GetClassName(Table)%>Service{
+    @Autowired
+    private <%=GetClassName(Table)%>Dao <%=GetClazzName(Table)%>Dao;
+    
+    public ResultBody getInfo(String id) {
+        <%=GetClassName(Table)%> <%=GetClazzName(Table)%>=<%=GetClazzName(Table)%>Dao.getInfo(id);
+        ResultBody resultBody = new ResultBody(<%=GetClazzName(Table)%>);
+        return resultBody;
+    }
+    
+    public ResultBody getList(String keyword){
+        Page<?> page = PageUtil.startPageAllowNull(1, 2);
+        List<<%=GetClassName(Table)%>> <%=GetClazzName(Table)%>List = <%=GetClazzName(Table)%>Dao.getList(SqlUtil.likeEscapeH(keyword));
+        PageResult<<%=GetClassName(Table)%>> pageList = new PageResult<<%=GetClassName(Table)%>>(<%=GetClazzName(Table)%>List, page.getTotal());
+        ResultBody resultBody = new ResultBody(pageList);
+        return resultBody;
+    }
+    
+    public ResultBody addInfo(<%=GetClassName(Table)%> <%=GetClazzName(Table)%>) {
+        int num = <%=GetClazzName(Table)%>Dao.addInfo(<%=GetClazzName(Table)%>);
+        ResultBody resultBody = new ResultBody(num);
+        return resultBody;
+    }
+    
+    public ResultBody updateInfo(<%=GetClassName(Table)%> <%=GetClazzName(Table)%>){
+        int num = <%=GetClazzName(Table)%>Dao.updateInfo(<%=GetClazzName(Table)%>);
+        ResultBody resultBody = new ResultBody(num);
+        return resultBody;
+    }
+    
+    public ResultBody delInfo(String id) {
+        int num = <%=GetClazzName(Table)%>Dao.delInfo(id);
+        ResultBody resultBody = new ResultBody(num);
+        return resultBody;
+    }   
+}
+<script runat="template">
+//PascalName命名法(大驼峰）
+public string GetPascalName(string name)
+{
+    string result="";
+    string[] arrName = name.Split('_');//按_截取截取数组
+    for(int i=0;i<arrName.Length;i++){
+        string item=arrName[i];
+        item=item.ToLower();
+        item=item.Substring(0,1).ToUpper()+item.Substring(1);
+        result+=item;
+    } 
+    return result;
+}
+//CamelName命名法（小驼峰）
+public string GetCamelName(string name)
+{
+     string result="";
+    string[] arrName = name.Split('_');//按_截取截取数组
+    for(int i=0;i<arrName.Length;i++){
+        string item=arrName[i];
+        item=item.ToLower();
+        item=item.Substring(0,1).ToUpper()+item.Substring(1);
+        result+=item;
+    }
+    result=result.Substring(0,1).ToLower()+result.Substring(1);
+    return result;
+}
+
+//移除表名dt_标志
+public String GetTableNameRemoveDt(TableSchema table)
+{
+    return table.Name.Substring(3);
+}
+//获取实例名
+public String GetClazzName(TableSchema table)
+{    
+    string shortTableName=GetTableNameRemoveDt(table);
+    return GetCamelName(shortTableName);
+}
+//获取类名
+public String GetClassName(TableSchema table)
+{    
+    string shortTableName=GetTableNameRemoveDt(table);
+    return GetPascalName(shortTableName);
+}
+</script>
